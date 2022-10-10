@@ -4,27 +4,63 @@ author: "Mason Ma"
 date: "10/3/2022"
 output: html_document
 ---
+# Question 1
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+library(tidyverse)
+library(ggplot2)
+abalone<-read.csv("/Users/mason/Desktop/homework-2/data/abalone.csv")
+
+my_data<-mutate(abalone,age = rings+1.5)
+age_plot<-ggplot(my_data,aes(x = age))+ geom_histogram(aes(y = ..density..),colour = 1, fill = "grey") +geom_density(lwd = 1,linetype = 1,colour = 2)
+print(age_plot+ggtitle("Histogram of Abalones' Ages"))
 ```
 
-## R Markdown
+From the output of the histogram of the Abalones' Ages, we can see that this plot appears to be relatively normally distributed with a longer tail on the right side--(right-skewed). Most of the data fall within the range between 7 and 15.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# Question 2
+```{r}
+library(tidymodels)
+set.seed(713)
+abalone_split <- initial_split(my_data, prop = 0.80,strata = age)
+abalone_train <- training(abalone_split)
+abalone_test <- testing(abalone_split)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Question 3
+```{r}
+library(tidymodels)
+simple_abalone_recipe <- recipe(age ~ ., data = abalone_train) %>%
+  step_rm(rings) %>%
+## not include rings to predict age
+  step_dummy(all_nominal_predictors()) %>%
+## dummy code any categorical predictors
+  step_interact(terms = ~ starts_with("type"):shucked_weight +longest_shell:diameter+shucked_weight:shell_weight) %>%
+## create interactions 
+  step_normalize(all_predictors()) 
+## center all predictors and scale all predictors.
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Since the age is calculated as the number of rings plus 1.5, then if we include rings to predict age, there will be a rather strong relationship between rings and age. In that case, those remaining predictors would be meaningless and the model will lose its usage at all.
+
+# Question 4
+```{r}
+lm_model <- linear_reg() %>% 
+ set_engine("lm")
+```
+
+
+# Question 5
+```{r}
+simple_abalone_wflow <- workflow() %>% 
+## set up an empty workflow  
+  add_model(lm_model) %>% 
+## add the model you created in Question 4  
+  add_recipe(simple_abalone_recipe)
+## add the recipe that you created in Question 3
+
+simple_abalone_fit <- fit(simple_abalone_wflow, abalone_train)
+```
+  
