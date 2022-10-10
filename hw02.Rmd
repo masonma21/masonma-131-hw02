@@ -2,7 +2,7 @@
 title: "hw02"
 author: "Mason Ma"
 date: "10/3/2022"
-output: html_document
+output: pdf_document
 ---
 # Question 1
 ```{r}
