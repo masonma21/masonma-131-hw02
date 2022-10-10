@@ -1,8 +1,8 @@
 ---
-title: "hw02"
+title: "Hw02"
 author: "Mason Ma"
 date: "10/3/2022"
-output: pdf_document
+output: html_document
 ---
 # Question 1
 ```{r}
