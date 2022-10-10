@@ -394,7 +394,7 @@ print(age_plot+ggtitle(&quot;Histogram of Abalones&#39; Ages&quot;))</code></pre
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ✖ yardstick::spec() masks readr::spec()
 ## ✖ recipes::step()   masks stats::step()
-## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+## • Dig deeper into tidy modeling with R at https://www.tmwr.org</code></pre>
 <pre class="r"><code>set.seed(713)
 abalone_split &lt;- initial_split(my_data, prop = 0.80,strata = age)
 abalone_train &lt;- training(abalone_split)
@@ -408,7 +408,9 @@ simple_abalone_recipe &lt;- recipe(age ~ ., data = abalone_train) %&gt;%
 ## not include rings to predict age
   step_dummy(all_nominal_predictors()) %&gt;%
 ## dummy code any categorical predictors
-  step_interact(terms = ~ starts_with(&quot;type&quot;):shucked_weight +longest_shell:diameter+shucked_weight:shell_weight) %&gt;%
+  step_interact(terms = ~ starts_with(&quot;type&quot;):shucked_weight 
+                +longest_shell:diameter
+                +shucked_weight:shell_weight) %&gt;%
 ## create interactions 
   step_normalize(all_predictors()) 
 ## center all predictors and scale all predictors.</code></pre>
@@ -429,6 +431,40 @@ simple_abalone_recipe &lt;- recipe(age ~ ., data = abalone_train) %&gt;%
 ## add the recipe that you created in Question 3
 
 simple_abalone_fit &lt;- fit(simple_abalone_wflow, abalone_train)</code></pre>
+</div>
+<div id="question-6" class="section level1">
+<h1>Question 6</h1>
+<pre class="r"><code>## Use your fit() object to predict the age of a female abalone 
+## with these parameters below.
+female_abalone &lt;- tibble(type = &quot;F&quot;, longest_shell = 0.50,
+ diameter = 0.10, height = 0.30, whole_weight = 4,
+ shucked_weight = 1, viscera_weight = 2,
+ shell_weight = 1,rings=0)
+
+predict(simple_abalone_fit, new_data = female_abalone)</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   .pred
+##   &lt;dbl&gt;
+## 1  23.3</code></pre>
+<p>We can see the predicted value of this hypothetical female abalone is 23.347 years.</p>
+</div>
+<div id="question-7" class="section level1">
+<h1>Question 7</h1>
+<pre class="r"><code>library(yardstick)
+metric_group&lt;-metric_set(rmse, rsq, mae)
+## Create a metric set that includes R^2, RMSE, and MAE.
+simple_abalone_predict &lt;- predict(simple_abalone_fit, abalone_train) %&gt;% 
+ bind_cols(abalone_train %&gt;% select(age))
+## Use predict() and bind_cols() to create a tibble of your model&#39;s predicted values from the training data along with the actual observed ages.
+metric_group(simple_abalone_predict, truth = age, estimate = .pred)</code></pre>
+<pre><code>## # A tibble: 3 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard       2.16 
+## 2 rsq     standard       0.558
+## 3 mae     standard       1.55</code></pre>
+<pre class="r"><code>## apply your metric set to the tibble, report the results, and interpret the R^2 value.</code></pre>
+<p>From the output above, we see the R-squared value (rsq) is 0.5575, which means that only about 55.75% of the variation in the dataset could be explained by out model. This is probably because the relationship between the outcome variable (age) and the predictors may not be linear. If we aim to lower the error, we can try to use other model to predict.</p>
 </div>
 
 

@@ -5,7 +5,6 @@ date: "10/3/2022"
 output: html_document
 ---
 # Question 1
-
 ```{r}
 library(tidyverse)
 library(ggplot2)
@@ -37,7 +36,9 @@ simple_abalone_recipe <- recipe(age ~ ., data = abalone_train) %>%
 ## not include rings to predict age
   step_dummy(all_nominal_predictors()) %>%
 ## dummy code any categorical predictors
-  step_interact(terms = ~ starts_with("type"):shucked_weight +longest_shell:diameter+shucked_weight:shell_weight) %>%
+  step_interact(terms = ~ starts_with("type"):shucked_weight 
+                +longest_shell:diameter
+                +shucked_weight:shell_weight) %>%
 ## create interactions 
   step_normalize(all_predictors()) 
 ## center all predictors and scale all predictors.
@@ -51,7 +52,6 @@ lm_model <- linear_reg() %>%
  set_engine("lm")
 ```
 
-
 # Question 5
 ```{r}
 simple_abalone_wflow <- workflow() %>% 
@@ -64,3 +64,34 @@ simple_abalone_wflow <- workflow() %>%
 simple_abalone_fit <- fit(simple_abalone_wflow, abalone_train)
 ```
   
+# Question 6
+```{r}
+## Use your fit() object to predict the age of a female abalone 
+## with these parameters below.
+female_abalone <- tibble(type = "F", longest_shell = 0.50,
+ diameter = 0.10, height = 0.30, whole_weight = 4,
+ shucked_weight = 1, viscera_weight = 2,
+ shell_weight = 1,rings=0)
+
+predict(simple_abalone_fit, new_data = female_abalone)
+```
+
+We can see the predicted value of this hypothetical female abalone is 23.347 years.
+
+# Question 7
+```{r}
+library(yardstick)
+metric_group<-metric_set(rmse, rsq, mae)
+## Create a metric set that includes R^2, RMSE, and MAE.
+simple_abalone_predict <- predict(simple_abalone_fit, abalone_train) %>% 
+ bind_cols(abalone_train %>% select(age))
+## Use predict() and bind_cols() to create a tibble of your model's predicted values from the training data along with the actual observed ages.
+metric_group(simple_abalone_predict, truth = age, estimate = .pred)
+## apply your metric set to the tibble, report the results, and interpret the R^2 value.
+```
+
+From the output above, we see the R-squared value (rsq) is 0.5575, which means that only about 55.75% of the variation in the dataset could be explained by out model. This is probably because the relationship between the outcome variable (age) and the predictors may not be linear. If we aim to lower the error, we can try to use other model to predict.
+
+
+
+
